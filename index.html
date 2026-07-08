@@ -37,7 +37,7 @@
   header h1{
     font-family:'Shippori Mincho',serif;
     font-weight:700;
-    font-size:22px;
+    font-size:26px;
     margin:0;
     letter-spacing:.04em;
   }
@@ -47,7 +47,7 @@
   }
   header h1 a:hover{ opacity:.85; }
   header .sub{
-    font-size:13px;
+    font-size:15px;
     opacity:.9;
     letter-spacing:.06em;
     color:var(--paper);
@@ -110,7 +110,7 @@
   }
   .spot-badge{
     width:26px;height:26px;border-radius:50%;
-    background:var(--moss);color:#fff;
+    background:var(--river-deep);color:#fff;
     display:flex;align-items:center;justify-content:center;
     font-size:12px;font-weight:700;flex-shrink:0;
   }
@@ -337,6 +337,28 @@ window.addEventListener('load', fixMapSize);
 window.addEventListener('resize', fixMapSize);
 setTimeout(fixMapSize, 300);
 
+/* ===================== 下呂市 境界線の表示 =====================
+   国立情報学研究所「歴史的行政区域データセットβ版」が公開している
+   下呂市単体のGeoJSON（2023年基準）を読み込み、点線の境界線として
+   オーバーレイ表示する。 */
+fetch('https://geoshape.ex.nii.ac.jp/city/geojson/20230101/21/21220A2004.geojson')
+  .then(res => res.json())
+  .then(geojson => {
+    L.geoJSON(geojson, {
+      style: {
+        color: '#d97b3f',
+        weight: 2,
+        dashArray: '6 4',
+        fill: false
+      },
+      interactive: false
+    }).addTo(map);
+  })
+  .catch(() => {
+    // 境界データが取得できなくても地図自体は通常通り表示させる
+    console.warn('下呂市の境界データを読み込めませんでした。');
+  });
+
 function makeIcon(active, number){
   return L.divIcon({
     className: '',
@@ -371,8 +393,8 @@ SPOTS.forEach((spot, i) => {
   const pdfHtml = spot.pdf
     ? `<a href="${spot.pdf}" target="_blank" rel="noopener noreferrer" class="popup-pdf-link">詳しく見る（PDF）</a>`
     : '';
-  const mapsHtml = `<a href="#" class="popup-maps-link" data-lat="${spot.lat}" data-lng="${spot.lng}">現在地からのルート（車）</a>`;
-  const homeHtml = `<a href="${BASE_URL}" class="popup-home-link">全体図に戻る</a>`;
+  const mapsHtml = `<a href="#" class="popup-maps-link" data-lat="${spot.lat}" data-lng="${spot.lng}">現在地からのルート（Google）</a>`;
+  const homeHtml = `<a href="${BASE_URL}" class="popup-home-link">全体図を見る</a>`;
   marker.bindPopup(
     `${imageHtml}
      <p class="popup-title">${spot.name}</p>
