@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -108,6 +109,18 @@
   .popup-title{font-weight:700;font-size:13px;margin:0 0 4px;}
   .popup-body{font-size:12px;line-height:1.6;margin:0;}
   .popup-tags{margin-top:6px;font-size:11px;color:var(--river-mid);}
+  .popup-pdf-link{
+    display:inline-block;
+    margin-top:10px;
+    padding:6px 12px;
+    background:var(--ayu-orange);
+    color:#fff;
+    font-size:11px;
+    font-weight:700;
+    text-decoration:none;
+    border-radius:5px;
+  }
+  .popup-pdf-link:hover{ opacity:.9; }
   .popup-image{
     display:block;
     width:100%;
@@ -202,6 +215,7 @@ const SPOTS = [
     river: "門和佐川",
     lat: 35.7131178, lng: 137.2077537,
     image: "tanosiri.jpg",
+    pdf: "tanosiri.pdf",
     desc: "日本の原風景の中で、鮎を釣る。橋の上から覗くと、鮎が泳ぐ姿がはっきり見える透明度。",
     tags: "駐車場有・トイレ有（車で2分）・初心者向き"
   }
@@ -222,34 +236,46 @@ window.addEventListener('load', fixMapSize);
 window.addEventListener('resize', fixMapSize);
 setTimeout(fixMapSize, 300);
 
-function makeIcon(active){
+function makeIcon(active, number){
   return L.divIcon({
     className: '',
     html: `<div style="
-      width:26px;height:26px;border-radius:50% 50% 50% 0;
+      width:28px;height:28px;border-radius:50% 50% 50% 0;
       background:${active ? '#d97b3f' : '#1f4a52'};
       transform:rotate(-45deg);
       border:2px solid #fff;
       box-shadow:0 1px 4px rgba(0,0,0,.35);
-    "></div>`,
-    iconSize: [26,26],
-    iconAnchor: [13,26],
-    popupAnchor: [0,-24]
+      display:flex;align-items:center;justify-content:center;
+    "><span style="
+      transform:rotate(45deg);
+      color:#fff;font-weight:700;font-size:13px;
+      font-family:'Noto Sans JP',sans-serif;
+    ">${number}</span></div>`,
+    iconSize: [28,28],
+    iconAnchor: [14,28],
+    popupAnchor: [0,-26]
   });
 }
 
 const markers = {};
-SPOTS.forEach(spot => {
-  const marker = L.marker([spot.lat, spot.lng], { icon: makeIcon(false) }).addTo(map);
+const spotNumberById = {};
+SPOTS.forEach((spot, i) => {
+  spotNumberById[spot.id] = i + 1;
+  const marker = L.marker([spot.lat, spot.lng], { icon: makeIcon(false, i + 1) }).addTo(map);
   const imageHtml = spot.image
     ? `<img src="${spot.image}" alt="${spot.name}" class="popup-image">`
+    : '';
+  const pdfHtml = spot.pdf
+    ? `<a href="${spot.pdf}" target="_blank" rel="noopener noreferrer" class="popup-pdf-link">詳しく見る（PDF）</a>`
     : '';
   marker.bindPopup(
     `${imageHtml}
      <p class="popup-title">${spot.name}</p>
      <p class="popup-body">${spot.desc}</p>
-     <p class="popup-tags">${spot.tags}</p>`,
+     <p class="popup-tags">${spot.tags}</p>
+     ${pdfHtml}`,
     { maxWidth: 240 }
+
   );
   marker.on('click', () => selectSpot(spot.id, false));
   markers[spot.id] = marker;
@@ -277,7 +303,7 @@ function selectSpot(id, flyToIt){
 
   // ピンの見た目更新
   Object.entries(markers).forEach(([sid, m]) => {
-    m.setIcon(makeIcon(sid === id));
+    m.setIcon(makeIcon(sid === id, spotNumberById[sid]));
   });
 
   // リストのハイライト更新
