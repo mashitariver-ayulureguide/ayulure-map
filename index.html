@@ -22,7 +22,7 @@
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;height:100%;background:var(--paper);color:var(--ink);font-family:'Noto Sans JP',sans-serif;}
 
-  .app{display:flex;flex-direction:column;height:100vh;min-height:640px;}
+  .app{display:flex;flex-direction:column;height:100vh;height:100dvh;min-height:480px;}
 
   header{
     background:linear-gradient(120deg,var(--river-deep),var(--river-mid));
@@ -64,11 +64,21 @@
     flex-shrink:0;
     background:var(--paper);
     border-left:1px solid var(--stone-dark);
-    overflow-y:auto;
     display:flex;
     flex-direction:column;
+    position:relative;
+    overflow:hidden;
+  }
+  .panel::after{
+    content:'';
+    position:absolute;
+    left:0; right:0; bottom:0;
+    height:28px;
+    background:linear-gradient(to bottom, rgba(247,245,238,0), var(--paper) 85%);
+    pointer-events:none;
   }
   .panel-head{
+    flex-shrink:0;
     padding:20px 18px 14px;
     border-bottom:1px solid var(--stone-dark);
   }
@@ -81,7 +91,7 @@
     color:var(--river-deep);
   }
 
-  .spot-list{list-style:none;margin:0;padding:8px;}
+  .spot-list{list-style:none;margin:0;padding:8px;padding-bottom:28px;flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;}
   .spot-item{
     display:flex;
     gap:10px;
@@ -121,7 +131,8 @@
     margin-top:10px;
   }
   .popup-pdf-link,
-  .popup-maps-link{
+  .popup-maps-link,
+  .popup-home-link{
     display:inline-block;
     padding:6px 10px;
     font-size:11px;
@@ -138,8 +149,14 @@
     background:var(--river-mid);
     color:#fff !important;
   }
+  .popup-home-link{
+    background:transparent;
+    color:var(--river-deep) !important;
+    border:1px solid var(--stone-dark);
+  }
   .popup-pdf-link:hover,
-  .popup-maps-link:hover{ opacity:.88; }
+  .popup-maps-link:hover,
+  .popup-home-link:hover{ opacity:.8; }
   .popup-image{
     display:block;
     width:100%;
@@ -151,9 +168,9 @@
   }
 
   @media (max-width:760px){
-    .layout{flex-direction:column;}
-    .panel{width:100%;height:38%;border-left:none;border-top:1px solid var(--stone-dark);}
-    #map{height:62%;}
+    .layout{flex-direction:column;min-height:0;}
+    .panel{width:100%;height:38%;min-height:0;border-left:none;border-top:1px solid var(--stone-dark);}
+    #map{height:62%;flex:none;min-height:0;}
   }
 </style>
 </head>
@@ -189,6 +206,7 @@ const SPOTS = [
     river: "小坂川",
     lat: 35.9315092, lng: 137.2948095,
     image: "hanamomo.jpg",
+    pdf: "hanamomo.pdf",
     desc: "御嶽の恵みに育まれた鮎を釣りに。道の駅からすぐ、トイレも食事処も近い安心感。",
     tags: "駐車場有・トイレ有・初心者向き"
   },
@@ -198,6 +216,7 @@ const SPOTS = [
     river: "大洞川",
     lat: 35.9215159, lng: 137.3091557,
     image: "kyowabashi.jpg",
+    pdf: "kyowabashi.pdf",
     desc: "釣りも、川遊びも楽しめる。近隣にキャンプ場あり、川遊びできるスポットも点在。",
     tags: "舗装駐車場有・初心者向き"
   },
@@ -207,6 +226,7 @@ const SPOTS = [
     river: "竹原川",
     lat: 35.7653959, lng: 137.2870686,
     image: "lawson.jpg",
+    pdf: "lawson.pdf",
     desc: "川で出会える、おいしい鮎。鮎の美味しさ・美しさの品評会「鮎グランプリ」の鮎が釣れる。",
     tags: "舗装駐車場有・コンビニ有・初心者向き"
   },
@@ -216,6 +236,7 @@ const SPOTS = [
     river: "山之口川",
     lat: 35.9684801, lng: 137.1960171,
     image: "yamayuubin.jpg",
+    pdf: "yamayuubin.pdf",
     desc: "静寂と透明度、山里の清流に浸る。抜群の透明度と豊かな自然、静かに川と向き合いたい人のためのフィールド。",
     tags: "駐車場有・トイレ有（車で2分）・初心者向き"
   },
@@ -225,6 +246,7 @@ const SPOTS = [
     river: "飛騨川",
     lat: 35.8807575, lng: 137.2068935,
     image: "kumiaimae.jpg",
+    pdf: "kumiaimae.pdf",
     desc: "本流の開放感、大鮎の舞台。飛騨川本流ならではの開放的な眺望。大型の鮎が期待できる。",
     tags: "舗装駐車場有・トイレ有・コンビニ有"
   },
@@ -237,6 +259,66 @@ const SPOTS = [
     pdf: "tanosiri.pdf",
     desc: "日本の原風景の中で、鮎を釣る。橋の上から覗くと、鮎が泳ぐ姿がはっきり見える透明度。",
     tags: "駐車場有・トイレ有（車で2分）・初心者向き"
+  },
+  {
+    id: "sankoh",
+    name: "門和佐川（支流）三光橋",
+    river: "門和佐川",
+    lat: 35.7155981, lng: 137.2068537,
+    image: "sankoh.jpg",
+    pdf: "sankoh.pdf",
+    desc: "鮎ルアー向きの区間「三光橋」。駐車スペースは、橋の下流側に5台程度停めることが可能。",
+    tags: "駐車場有・トイレ有（車で2分）・初心者向き"
+  },
+  {
+    id: "wasaground",
+    name: "門和佐川（支流）和佐グラウンド",
+    river: "門和佐川",
+    lat: 35.7180191, lng: 137.2048497,
+    image: "wasaground.jpg",
+    pdf: "wasaground.pdf",
+    desc: "2025年に鮎ルアーイベントの会場にもなった。駐車スペース多数、公衆トイレもあり。",
+    tags: "駐車場有・トイレ有・初心者向き"
+  },
+  {
+    id: "yamaki",
+    name: "門和佐川（支流）山喜建設（北）",
+    river: "門和佐川",
+    lat: 35.7201237, lng: 137.204829,
+    image: "yamaki.jpg",
+    pdf: "yamaki.pdf",
+    desc: "競争率低め、穴場ポイント。駐車は未舗装部分のみ可。※舗装部分は私有地のため駐車禁止。",
+    tags: "駐車場有・トイレ有（車で2分）・初心者向き"
+  },
+  {
+    id: "kadowasagoryu",
+    name: "門和佐川（支流）本流合流点",
+    river: "門和佐川",
+    lat: 35.7222683, lng: 137.2011067,
+    image: "kadowasagoryu.jpg",
+    pdf: "kadowasagoryu.pdf",
+    desc: "門和佐川の最下流部。産卵を控えた鮎が居着くポイント。シーズン後半におすすめ。",
+    tags: "駐車場有・トイレ有（車で3分）・初心者向き"
+  },
+  {
+    id: "nakaharakoh",
+    name: "飛騨川　中原公民館裏",
+    river: "飛騨川",
+    lat: 35.726036, lng: 137.1991328,
+    image: "nakaharakoh.jpg",
+    pdf: "nakaharakoh.pdf",
+    desc: "終盤の大鮎釣りの人気ポイント。お盆には尺鮎が出た実績あり。シーズン後半にもおすすめ。",
+    tags: "駐車場有・トイレ有（車で2分）"
+  },
+  {
+    id: "nakaharahoiku",
+    name: "飛騨川　旧中原保育園裏",
+    river: "飛騨川",
+    lat: 35.7289316, lng: 137.1973007,
+    image: "nakaharahoiku.jpg",
+    pdf: "nakaharahoiku.pdf",
+    desc: "旧「中原保育園」の裏手。お盆には尺鮎が出た実績あり。終盤の大鮎釣りの人気ポイント。",
+    tags: "駐車場有・トイレ有（車で3分）"
   }
 ];
 
@@ -276,6 +358,8 @@ function makeIcon(active, number){
   });
 }
 
+const BASE_URL = "https://mashitariver-ayulureguide.github.io/ayulure-map/";
+
 const markers = {};
 const spotNumberById = {};
 SPOTS.forEach((spot, i) => {
@@ -287,19 +371,48 @@ SPOTS.forEach((spot, i) => {
   const pdfHtml = spot.pdf
     ? `<a href="${spot.pdf}" target="_blank" rel="noopener noreferrer" class="popup-pdf-link">詳しく見る（PDF）</a>`
     : '';
-  const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${spot.lat},${spot.lng}&travelmode=driving`;
-  const mapsHtml = `<a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="popup-maps-link">現在地からのルート（車）</a>`;
+  const mapsHtml = `<a href="#" class="popup-maps-link" data-lat="${spot.lat}" data-lng="${spot.lng}">現在地からのルート（車）</a>`;
+  const homeHtml = `<a href="${BASE_URL}" class="popup-home-link">全体図に戻る</a>`;
   marker.bindPopup(
     `${imageHtml}
      <p class="popup-title">${spot.name}</p>
      <p class="popup-body">${spot.desc}</p>
      <p class="popup-tags">${spot.tags}</p>
-     <div class="popup-links">${mapsHtml}${pdfHtml}</div>`,
+     <div class="popup-links">${mapsHtml}${pdfHtml}${homeHtml}</div>`,
     { maxWidth: 240 }
 
   );
   marker.on('click', () => selectSpot(spot.id, false));
   markers[spot.id] = marker;
+});
+
+/* 「現在地からのルート」ボタン：ブラウザの位置情報から現在地を取得し、
+   出発地を明示したGoogleマップのURLを組み立てる（東京など固定地点に
+   飛んでしまう問題を避けるため、Google側の自動判定に頼らない） */
+document.addEventListener('click', (e) => {
+  const link = e.target.closest('.popup-maps-link');
+  if(!link) return;
+  e.preventDefault();
+  const destLat = link.dataset.lat;
+  const destLng = link.dataset.lng;
+  const openWithOrigin = (originStr) => {
+    const url = `https://www.google.com/maps/dir/?api=1${originStr}&destination=${destLat},${destLng}&travelmode=driving`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        openWithOrigin(`&origin=${pos.coords.latitude},${pos.coords.longitude}`);
+      },
+      () => {
+        // 位置情報が取得できない場合は、目的地のみ指定してGoogle側の現在地判定に任せる
+        openWithOrigin('');
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  } else {
+    openWithOrigin('');
+  }
 });
 
 /* ===================== 右パネルのリスト生成 ===================== */
