@@ -90,6 +90,8 @@
     margin:0;
     color:var(--river-deep);
   }
+  .sheet-handle,
+  .sheet-chevron{ display:none; }
 
   .spot-list{list-style:none;margin:0;padding:8px;padding-bottom:28px;flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;}
   .spot-item{
@@ -168,9 +170,63 @@
   }
 
   @media (max-width:760px){
-    .layout{flex-direction:column;min-height:0;}
-    .panel{width:100%;height:38%;min-height:0;border-left:none;border-top:1px solid var(--stone-dark);}
-    #map{height:62%;flex:none;min-height:0;}
+    .layout{position:relative;min-height:0;}
+    #map{position:absolute;inset:0;height:100%;width:100%;}
+
+    .panel{
+      position:absolute;
+      left:0; right:0; bottom:0;
+      width:100%;
+      height:72vh;
+      max-height:72vh;
+      min-height:0;
+      border-left:none;
+      border-top:none;
+      border-radius:16px 16px 0 0;
+      box-shadow:0 -6px 20px rgba(0,0,0,.18);
+      transform:translateY(calc(100% - 54px));
+      transition:transform .32s ease;
+      z-index:500;
+    }
+    .panel.sheet-open{
+      transform:translateY(0);
+    }
+
+    .panel-head{
+      position:relative;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      padding:16px 18px 12px;
+    }
+    .sheet-handle{
+      display:block;
+      position:absolute;
+      top:7px; left:50%;
+      transform:translateX(-50%);
+      width:36px; height:4px;
+      border-radius:2px;
+      background:var(--stone-dark);
+    }
+    .panel-head h2{ font-size:18px; }
+    .sheet-chevron{
+      display:inline-block;
+      font-size:11px;
+      color:var(--river-mid);
+      transition:transform .32s ease;
+    }
+    .panel.sheet-open .sheet-chevron{ transform:rotate(180deg); }
+
+    .popup-image{height:70px;}
+    .popup-title{font-size:12px;}
+    .popup-body{font-size:11px;line-height:1.5;}
+    .popup-tags{font-size:10px;margin-top:4px;}
+    .popup-links{gap:5px;margin-top:6px;}
+    .popup-pdf-link,
+    .popup-maps-link,
+    .popup-home-link{padding:5px 8px;font-size:10px;}
   }
 </style>
 </head>
@@ -185,9 +241,11 @@
   <div class="layout">
     <div id="map"></div>
 
-    <div class="panel">
-      <div class="panel-head">
-        <h2>ポイント一覧</h2>
+    <div class="panel" id="panel">
+      <div class="panel-head" id="panelHead">
+        <span class="sheet-handle" aria-hidden="true"></span>
+        <h2 id="panelTitle">ポイント一覧</h2>
+        <span class="sheet-chevron" aria-hidden="true">▲</span>
       </div>
       <ul class="spot-list" id="spotList"></ul>
     </div>
@@ -401,7 +459,7 @@ SPOTS.forEach((spot, i) => {
      <p class="popup-body">${spot.desc}</p>
      <p class="popup-tags">${spot.tags}</p>
      <div class="popup-links">${mapsHtml}${pdfHtml}${homeHtml}</div>`,
-    { maxWidth: 240 }
+    { maxWidth: 240, maxHeight: 300, autoPanPadding: [16, 16] }
 
   );
   marker.on('click', () => selectSpot(spot.id, false));
@@ -438,6 +496,8 @@ document.addEventListener('click', (e) => {
 });
 
 /* ===================== 右パネルのリスト生成 ===================== */
+document.getElementById('panelTitle').textContent = `ポイント一覧（${SPOTS.length}）`;
+
 const listEl = document.getElementById('spotList');
 SPOTS.forEach((spot, i) => {
   const li = document.createElement('li');
@@ -450,6 +510,12 @@ SPOTS.forEach((spot, i) => {
     </div>`;
   li.addEventListener('click', () => selectSpot(spot.id, true));
   listEl.appendChild(li);
+});
+
+/* ===================== ボトムシートの開閉（スマホ表示） ===================== */
+const panelEl = document.getElementById('panel');
+document.getElementById('panelHead').addEventListener('click', () => {
+  panelEl.classList.toggle('sheet-open');
 });
 
 /* ===================== 選択状態の反映 ===================== */
@@ -471,6 +537,9 @@ function selectSpot(id, flyToIt){
     map.flyTo([spot.lat, spot.lng], 15, { duration: 0.8 });
   }
   markers[id].openPopup();
+
+  // ポイントを選んだら、地図とピンが見えるようボトムシートを閉じる（スマホ表示）
+  panelEl.classList.remove('sheet-open');
 
   // URLを書き換え（ブラウザ履歴を汚さないreplaceState）
   const url = new URL(window.location.href);
