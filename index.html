@@ -41,13 +41,17 @@
     letter-spacing:.04em;
   }
   header .sub{
-    font-size:12px;
-    opacity:.85;
-    letter-spacing:.08em;
+    font-size:13px;
+    opacity:.9;
+    letter-spacing:.06em;
+    color:var(--paper);
+    text-decoration:underline;
+    text-underline-offset:3px;
   }
+  header .sub:hover{ opacity:1; }
 
   .layout{flex:1;display:flex;min-height:0;}
-  #map{flex:1;min-width:0;}
+  #map{flex:1;min-width:0;min-height:320px;}
 
   .panel{
     width:340px;
@@ -59,19 +63,16 @@
     flex-direction:column;
   }
   .panel-head{
-    padding:16px 18px 10px;
+    padding:20px 18px 14px;
     border-bottom:1px solid var(--stone-dark);
   }
   .panel-head h2{
     font-family:'Shippori Mincho',serif;
-    font-size:16px;
-    margin:0 0 4px;
-  }
-  .panel-head p{
-    font-size:12px;
-    line-height:1.6;
-    color:#5a5a52;
+    font-size:26px;
+    font-weight:700;
+    letter-spacing:.03em;
     margin:0;
+    color:var(--river-deep);
   }
 
   .spot-list{list-style:none;margin:0;padding:8px;}
@@ -98,29 +99,7 @@
     font-size:12px;font-weight:700;flex-shrink:0;
   }
   .spot-item.active .spot-badge{background:var(--ayu-orange);}
-  .spot-text .name{font-size:13px;font-weight:700;line-height:1.4;}
-  .spot-text .river{font-size:11px;color:var(--river-mid);}
-
-  .qr-block{
-    margin-top:auto;
-    padding:16px 18px;
-    border-top:1px solid var(--stone-dark);
-    background:var(--stone);
-  }
-  .qr-block h3{
-    font-size:12px;
-    margin:0 0 8px;
-    letter-spacing:.04em;
-  }
-  .qr-row{display:flex;gap:10px;align-items:center;}
-  .qr-row img{width:64px;height:64px;background:#fff;border:1px solid var(--stone-dark);border-radius:4px;}
-  .qr-row .url{
-    font-size:10px;
-    word-break:break-all;
-    color:#5a5a52;
-    line-height:1.5;
-    flex:1;
-  }
+  .spot-text .name{font-size:14px;font-weight:700;line-height:1.5;}
 
   .leaflet-popup-content-wrapper{
     border-radius:10px;
@@ -129,6 +108,15 @@
   .popup-title{font-weight:700;font-size:13px;margin:0 0 4px;}
   .popup-body{font-size:12px;line-height:1.6;margin:0;}
   .popup-tags{margin-top:6px;font-size:11px;color:var(--river-mid);}
+  .popup-image{
+    display:block;
+    width:100%;
+    height:120px;
+    object-fit:cover;
+    border-radius:6px;
+    margin:-4px -4px 8px;
+    width:calc(100% + 8px);
+  }
 
   @media (max-width:760px){
     .layout{flex-direction:column;}
@@ -142,7 +130,7 @@
 
   <header>
     <h1>益田川 鮎ルアーガイド</h1>
-    <span class="sub">QRコード → ポイント自動フォーカス マップ デモ</span>
+    <a class="sub" href="https://www.mashitagawa.jp/" target="_blank" rel="noopener noreferrer">益田川漁業協同組合</a>
   </header>
 
   <div class="layout">
@@ -151,16 +139,8 @@
     <div class="panel">
       <div class="panel-head">
         <h2>ポイント一覧</h2>
-        <p>QRを読み取ると <code>?point=ID</code> 付きのURLが開き、該当ピンへ自動移動＋説明を表示します。下のリストをクリックしても同じ挙動を確認できます。</p>
       </div>
       <ul class="spot-list" id="spotList"></ul>
-      <div class="qr-block">
-        <h3>選択中ポイントのQR（デモ用に自動生成）</h3>
-        <div class="qr-row">
-          <img id="qrImg" src="" alt="QRコード">
-          <div class="url" id="qrUrl">—</div>
-        </div>
-      </div>
     </div>
   </div>
 </div>
@@ -172,50 +152,56 @@
    id は各QRコードのURLパラメータ ?point=id と対応します。 */
 const SPOTS = [
   {
-    id: "kosaka",
-    name: "支流「小坂川」道の駅前",
+    id: "hanamomo",
+    name: "小坂川（支流）道の駅はなもも前",
     river: "小坂川",
-    lat: 35.9330, lng: 137.2650,
+    lat: 35.9315092, lng: 137.2948095,
+    image: "hanamomo.jpg",
     desc: "御嶽の恵みに育まれた鮎を釣りに。道の駅からすぐ、トイレも食事処も近い安心感。",
     tags: "駐車場有・トイレ有・初心者向き"
   },
   {
     id: "kyowabashi",
-    name: "大洞川　共和橋",
+    name: "大洞川（支流）共和橋",
     river: "大洞川",
-    lat: 35.9020, lng: 137.2430,
+    lat: 35.9215159, lng: 137.3091557,
+    image: "kyowabashi.jpg",
     desc: "釣りも、川遊びも楽しめる。近隣にキャンプ場あり、川遊びできるスポットも点在。",
     tags: "舗装駐車場有・初心者向き"
   },
   {
     id: "lawson",
-    name: "竹原川　ローソン前",
+    name: "竹原川（支流）ローソン前",
     river: "竹原川",
-    lat: 35.8520, lng: 137.2280,
+    lat: 35.7653959, lng: 137.2870686,
+    image: "lawson.jpg",
     desc: "川で出会える、おいしい鮎。鮎の美味しさ・美しさの品評会「鮎グランプリ」の鮎が釣れる。",
     tags: "舗装駐車場有・コンビニ有・初心者向き"
   },
   {
-    id: "yamanokuchi",
-    name: "支流「山之口川」郵便局前",
+    id: "yamayuubin",
+    name: "山之口川（支流）郵便局前",
     river: "山之口川",
-    lat: 35.8300, lng: 137.2400,
+    lat: 35.9684801, lng: 137.1960171,
+    image: "yamayuubin.jpg",
     desc: "静寂と透明度、山里の清流に浸る。抜群の透明度と豊かな自然、静かに川と向き合いたい人のためのフィールド。",
     tags: "駐車場有・トイレ有（車で2分）・初心者向き"
   },
   {
-    id: "kumiai",
+    id: "kumiaimae",
     name: "飛騨川　漁協事務所前",
     river: "飛騨川",
-    lat: 35.7980, lng: 137.2120,
+    lat: 35.8807575, lng: 137.2068935,
+    image: "kumiaimae.jpg",
     desc: "本流の開放感、大鮎の舞台。飛騨川本流ならではの開放的な眺望。大型の鮎が期待できる。",
     tags: "舗装駐車場有・トイレ有・コンビニ有"
   },
   {
-    id: "tanojiri",
-    name: "門和佐川　田之尻橋",
+    id: "tanosiri",
+    name: "門和佐川（支流）田之尻橋",
     river: "門和佐川",
-    lat: 35.7480, lng: 137.1920,
+    lat: 35.7131178, lng: 137.2077537,
+    image: "tanosiri.jpg",
     desc: "日本の原風景の中で、鮎を釣る。橋の上から覗くと、鮎が泳ぐ姿がはっきり見える透明度。",
     tags: "駐車場有・トイレ有（車で2分）・初心者向き"
   }
@@ -224,10 +210,17 @@ const SPOTS = [
 /* ===================== 地図初期化 ===================== */
 const map = L.map('map', { scrollWheelZoom: true }).setView([35.83, 137.22], 11);
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap contributors',
-  maxZoom: 18
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+  maxZoom: 19
 }).addTo(map);
+
+/* コンテナのサイズ確定タイミングによって地図が「世界表示」になってしまう
+   Leafletの既知の挙動を防ぐため、読み込み完了後とリサイズ時にサイズを再計算する */
+function fixMapSize(){ map.invalidateSize(); }
+window.addEventListener('load', fixMapSize);
+window.addEventListener('resize', fixMapSize);
+setTimeout(fixMapSize, 300);
 
 function makeIcon(active){
   return L.divIcon({
@@ -248,10 +241,15 @@ function makeIcon(active){
 const markers = {};
 SPOTS.forEach(spot => {
   const marker = L.marker([spot.lat, spot.lng], { icon: makeIcon(false) }).addTo(map);
+  const imageHtml = spot.image
+    ? `<img src="${spot.image}" alt="${spot.name}" class="popup-image">`
+    : '';
   marker.bindPopup(
-    `<p class="popup-title">${spot.name}</p>
+    `${imageHtml}
+     <p class="popup-title">${spot.name}</p>
      <p class="popup-body">${spot.desc}</p>
-     <p class="popup-tags">${spot.tags}</p>`
+     <p class="popup-tags">${spot.tags}</p>`,
+    { maxWidth: 240 }
   );
   marker.on('click', () => selectSpot(spot.id, false));
   markers[spot.id] = marker;
@@ -267,7 +265,6 @@ SPOTS.forEach((spot, i) => {
     <div class="spot-badge">${i+1}</div>
     <div class="spot-text">
       <div class="name">${spot.name}</div>
-      <div class="river">${spot.river}</div>
     </div>`;
   li.addEventListener('click', () => selectSpot(spot.id, true));
   listEl.appendChild(li);
@@ -293,21 +290,10 @@ function selectSpot(id, flyToIt){
   }
   markers[id].openPopup();
 
-  updateQrPreview(spot);
-
   // URLを書き換え（ブラウザ履歴を汚さないreplaceState）
   const url = new URL(window.location.href);
   url.searchParams.set('point', id);
   window.history.replaceState({}, '', url);
-}
-
-function updateQrPreview(spot){
-  const url = new URL(window.location.href);
-  url.searchParams.set('point', spot.id);
-  const fullUrl = url.toString();
-  document.getElementById('qrUrl').textContent = fullUrl;
-  document.getElementById('qrImg').src =
-    'https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=' + encodeURIComponent(fullUrl);
 }
 
 /* ===================== 初期表示：URLパラメータを読む ===================== */
@@ -317,10 +303,9 @@ const initialId = params.get('point');
 if(initialId && markers[initialId]){
   selectSpot(initialId, true);
 } else {
-  // パラメータが無ければ全体表示＋先頭ポイントをプレビュー
+  // パラメータが無ければ全体表示
   const bounds = L.latLngBounds(SPOTS.map(s => [s.lat, s.lng]));
   map.fitBounds(bounds.pad(0.2));
-  updateQrPreview(SPOTS[0]);
 }
 </script>
 </body>
