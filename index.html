@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>益田川 鮎ルアーガイド | FISHING POINT & MAP</title>
+<title>益田川 鮎ルアーガイド</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
@@ -40,6 +41,11 @@
     margin:0;
     letter-spacing:.04em;
   }
+  header h1 a{
+    color:inherit;
+    text-decoration:none;
+  }
+  header h1 a:hover{ opacity:.85; }
   header .sub{
     font-size:13px;
     opacity:.9;
@@ -108,18 +114,32 @@
   .popup-title{font-weight:700;font-size:13px;margin:0 0 4px;}
   .popup-body{font-size:12px;line-height:1.6;margin:0;}
   .popup-tags{margin-top:6px;font-size:11px;color:var(--river-mid);}
-  .popup-pdf-link{
-    display:inline-block;
+  .popup-links{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
     margin-top:10px;
-    padding:6px 12px;
-    background:var(--ayu-orange);
-    color:#fff;
+  }
+  .popup-pdf-link,
+  .popup-maps-link{
+    display:inline-block;
+    padding:6px 10px;
     font-size:11px;
     font-weight:700;
     text-decoration:none;
     border-radius:5px;
+    white-space:nowrap;
   }
-  .popup-pdf-link:hover{ opacity:.9; }
+  .popup-pdf-link{
+    background:var(--ayu-orange);
+    color:#fff !important;
+  }
+  .popup-maps-link{
+    background:var(--river-mid);
+    color:#fff !important;
+  }
+  .popup-pdf-link:hover,
+  .popup-maps-link:hover{ opacity:.88; }
   .popup-image{
     display:block;
     width:100%;
@@ -141,7 +161,7 @@
 <div class="app">
 
   <header>
-    <h1>益田川 鮎ルアーガイド</h1>
+    <h1><a href="https://mashitariver-ayulureguide.github.io/ayulure-map/">益田川 鮎ルアーガイド</a></h1>
     <a class="sub" href="https://www.mashitagawa.jp/" target="_blank" rel="noopener noreferrer">益田川漁業協同組合</a>
   </header>
 
@@ -267,12 +287,14 @@ SPOTS.forEach((spot, i) => {
   const pdfHtml = spot.pdf
     ? `<a href="${spot.pdf}" target="_blank" rel="noopener noreferrer" class="popup-pdf-link">詳しく見る（PDF）</a>`
     : '';
+  const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${spot.lat},${spot.lng}&travelmode=driving`;
+  const mapsHtml = `<a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="popup-maps-link">現在地からのルート（車）</a>`;
   marker.bindPopup(
     `${imageHtml}
      <p class="popup-title">${spot.name}</p>
      <p class="popup-body">${spot.desc}</p>
      <p class="popup-tags">${spot.tags}</p>
-     ${pdfHtml}`,
+     <div class="popup-links">${mapsHtml}${pdfHtml}</div>`,
     { maxWidth: 240 }
 
   );
