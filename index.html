@@ -501,7 +501,7 @@ document.addEventListener('click', (e) => {
 
   // 位置情報の取得が固まって応答が返らない環境向けの安全装置。
   // 一定時間で応答がなければ、目的地のみ指定して強制的に転送する。
-  const timeoutId = setTimeout(() => goTo(''), 6000);
+  const timeoutId = setTimeout(() => goTo(''), 4000);
 
   if(navigator.geolocation){
     navigator.geolocation.getCurrentPosition(
@@ -514,7 +514,7 @@ document.addEventListener('click', (e) => {
         clearTimeout(timeoutId);
         goTo('');
       },
-      { enableHighAccuracy: true, timeout: 5000 }
+      { enableHighAccuracy: false, timeout: 3000, maximumAge: 300000 }
     );
   } else {
     clearTimeout(timeoutId);
