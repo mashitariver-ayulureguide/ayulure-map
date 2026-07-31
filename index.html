@@ -470,12 +470,19 @@ SPOTS.forEach((spot, i) => {
   markers[spot.id] = marker;
 });
 
-/* 「現在地からのルート」ボタン：about:blank のタブを一切開かず、
-   本物のリンクとして動作させる方式。
+/* 「現在地からのルート」ボタン：
    吹き出しを開いた時点で裏側で現在地を取得しておき（prefetchLocation）、
-   ボタンをクリックした瞬間には既に分かっている現在地をURLに差し込んでから、
-   通常のリンク遷移として開く。取得できていない場合は目的地のみのURL
-   （href の初期値）のまま、通常のリンクとして遷移する。 */
+   ボタンをクリックした瞬間には既に分かっている現在地を使ってGoogleマップへ
+   遷移する。
+
+   iOSのSafari/Chromeでは、通常のGoogleマップWebリンク(https://www.google.com/maps/...)
+   を新しいタブで開こうとすると、ブラウザによって挙動が割れてしまう
+   （Safari:アプリを開く確認ダイアログ／Chrome:Google独自の「アプリで開く」宣伝ページ）。
+   これを避けるため、iOSでは Google マップアプリの専用URL形式(comgooglemaps://)を
+   直接呼び出す。アプリが入っていればブラウザの種類を問わず直接アプリへ切り替わり、
+   入っていなければ一定時間後に通常のWeb版へフォールバックする。 */
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
 let cachedPosition = null;
 function prefetchLocation(){
   if(cachedPosition || !navigator.geolocation) return;
@@ -488,11 +495,37 @@ function prefetchLocation(){
 
 document.addEventListener('click', (e) => {
   const link = e.target.closest('.popup-maps-link');
-  if(!link || !cachedPosition) return; // 現在地が未取得なら、href の初期値（目的地のみ）でそのまま遷移させる
+  if(!link) return;
+
   const destLat = link.dataset.lat;
   const destLng = link.dataset.lng;
-  // 通常のリンク遷移はそのまま活かし、飛び先のURLだけを直前で書き換える
-  link.href = `https://www.google.com/maps/dir/?api=1&origin=${cachedPosition.latitude},${cachedPosition.longitude}&destination=${destLat},${destLng}&travelmode=driving`;
+  const originParam = cachedPosition ? `${cachedPosition.latitude},${cachedPosition.longitude}` : '';
+  const webUrl = `https://www.google.com/maps/dir/?api=1${originParam ? '&origin=' + originParam : ''}&destination=${destLat},${destLng}&travelmode=driving`;
+
+  if(!isIOS){
+    // iOS以外（PC・Androidなど）は、これまで通り通常のWebリンクとして遷移
+    link.href = webUrl;
+    return;
+  }
+
+  // iOS：アプリへの直接切り替えを試み、切り替わらなければWeb版へフォールバック
+  e.preventDefault();
+  const appUrl = `comgooglemaps://?daddr=${destLat},${destLng}&directionsmode=driving`
+    + (originParam ? `&saddr=${originParam}` : '');
+
+  let switchedAway = false;
+  const markSwitched = () => { switchedAway = true; };
+  document.addEventListener('visibilitychange', markSwitched, { once: true });
+
+  window.location.href = appUrl;
+
+  setTimeout(() => {
+    document.removeEventListener('visibilitychange', markSwitched);
+    if(!switchedAway){
+      // アプリへ切り替わらなかった＝未インストールとみなし、Web版へ遷移
+      window.location.href = webUrl;
+    }
+  }, 600);
 });
 
 /* ===================== 右パネルのリスト生成 ===================== */
