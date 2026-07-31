@@ -513,19 +513,25 @@ document.addEventListener('click', (e) => {
   const appUrl = `comgooglemaps://?daddr=${destLat},${destLng}&directionsmode=driving`
     + (originParam ? `&saddr=${originParam}` : '');
 
-  let switchedAway = false;
-  const markSwitched = () => { switchedAway = true; };
-  document.addEventListener('visibilitychange', markSwitched, { once: true });
+  // 現在のタブのURLを変えずにアプリ起動を試みる（見えないiframe経由）
+  const trigger = document.createElement('iframe');
+  trigger.style.display = 'none';
+  document.body.appendChild(trigger);
+  try{
+    trigger.contentWindow.location.href = appUrl;
+  }catch(err){
+    trigger.remove();
+  }
 
-  window.location.href = appUrl;
-
+  // 少し長めに待ってから、実際に別アプリへ切り替わったか（＝このページが
+  // バックグラウンドになっているか）を判定してから、必要な場合のみWeb版へ
   setTimeout(() => {
-    document.removeEventListener('visibilitychange', markSwitched);
-    if(!switchedAway){
-      // アプリへ切り替わらなかった＝未インストールとみなし、Web版へ遷移
+    if(trigger.parentNode) trigger.remove();
+    if(!document.hidden){
+      // 切り替わっていない＝アプリ未インストールとみなし、Web版へ遷移
       window.location.href = webUrl;
     }
-  }, 600);
+  }, 1500);
 });
 
 /* ===================== 右パネルのリスト生成 ===================== */
