@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -388,6 +387,10 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r
   maxZoom: 19
 }).addTo(map);
 
+/* 地図クレジット表示が、スマホのボトムシート（画面下の一覧バー）と
+   重なってしまうため、常に重ならない位置（右上）に移動する */
+map.attributionControl.setPosition('topright');
+
 /* コンテナのサイズ確定タイミングによって地図が「世界表示」になってしまう
    Leafletの既知の挙動を防ぐため、読み込み完了後とリサイズ時にサイズを再計算する */
 function fixMapSize(){ map.invalidateSize(); }
@@ -468,30 +471,44 @@ SPOTS.forEach((spot, i) => {
 
 /* 「現在地からのルート」ボタン：ブラウザの位置情報から現在地を取得し、
    出発地を明示したGoogleマップのURLを組み立てる（東京など固定地点に
-   飛んでしまう問題を避けるため、Google側の自動判定に頼らない） */
+   飛んでしまう問題を避けるため、Google側の自動判定に頼らない）
+   ※Safari対策：位置情報の取得は非同期のため、取得後に window.open() すると
+   「ユーザー操作から離れた呼び出し」とみなされポップアップブロックされることがある。
+   そのためクリックの瞬間に空タブを先に開いておき、後から行き先を設定する。 */
 document.addEventListener('click', (e) => {
   const link = e.target.closest('.popup-maps-link');
   if(!link) return;
   e.preventDefault();
   const destLat = link.dataset.lat;
   const destLng = link.dataset.lng;
-  const openWithOrigin = (originStr) => {
+
+  // クリックした瞬間（ユーザー操作の文脈内）にタブを先に開いておく
+  const newTab = window.open('', '_blank');
+
+  const goTo = (originStr) => {
     const url = `https://www.google.com/maps/dir/?api=1${originStr}&destination=${destLat},${destLng}&travelmode=driving`;
-    window.open(url, '_blank', 'noopener,noreferrer');
+    if(newTab){
+      newTab.opener = null;
+      newTab.location.href = url;
+    } else {
+      // ポップアップがブロックされていた場合の保険（同じタブで開く）
+      window.location.href = url;
+    }
   };
+
   if(navigator.geolocation){
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        openWithOrigin(`&origin=${pos.coords.latitude},${pos.coords.longitude}`);
+        goTo(`&origin=${pos.coords.latitude},${pos.coords.longitude}`);
       },
       () => {
         // 位置情報が取得できない場合は、目的地のみ指定してGoogle側の現在地判定に任せる
-        openWithOrigin('');
+        goTo('');
       },
       { enableHighAccuracy: true, timeout: 8000 }
     );
   } else {
-    openWithOrigin('');
+    goTo('');
   }
 });
 
