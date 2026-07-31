@@ -454,7 +454,8 @@ SPOTS.forEach((spot, i) => {
   const pdfHtml = spot.pdf
     ? `<a href="${spot.pdf}" target="_blank" rel="noopener noreferrer" class="popup-pdf-link">詳しく見る（PDF）</a>`
     : '';
-  const mapsHtml = `<a href="#" class="popup-maps-link" data-lat="${spot.lat}" data-lng="${spot.lng}">現在地からのルート（Google）</a>`;
+  const mapsFallbackUrl = `https://www.google.com/maps/dir/?api=1&destination=${spot.lat},${spot.lng}&travelmode=driving`;
+  const mapsHtml = `<a href="${mapsFallbackUrl}" target="_blank" rel="noopener noreferrer" class="popup-maps-link" data-lat="${spot.lat}" data-lng="${spot.lng}">現在地からのルート（Google）</a>`;
   const homeHtml = `<a href="${BASE_URL}" class="popup-home-link">全体図を見る</a>`;
   marker.bindPopup(
     `${imageHtml}
@@ -469,57 +470,29 @@ SPOTS.forEach((spot, i) => {
   markers[spot.id] = marker;
 });
 
-/* 「現在地からのルート」ボタン：ブラウザの位置情報から現在地を取得し、
-   出発地を明示したGoogleマップのURLを組み立てる（東京など固定地点に
-   飛んでしまう問題を避けるため、Google側の自動判定に頼らない）
-   ※Safari対策：位置情報の取得は非同期のため、取得後に window.open() すると
-   「ユーザー操作から離れた呼び出し」とみなされポップアップブロックされることがある。
-   そのためクリックの瞬間に空タブを先に開いておき、後から行き先を設定する。 */
+/* 「現在地からのルート」ボタン：about:blank のタブを一切開かず、
+   本物のリンクとして動作させる方式。
+   吹き出しを開いた時点で裏側で現在地を取得しておき（prefetchLocation）、
+   ボタンをクリックした瞬間には既に分かっている現在地をURLに差し込んでから、
+   通常のリンク遷移として開く。取得できていない場合は目的地のみのURL
+   （href の初期値）のまま、通常のリンクとして遷移する。 */
+let cachedPosition = null;
+function prefetchLocation(){
+  if(cachedPosition || !navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(
+    (pos) => { cachedPosition = pos.coords; },
+    () => { /* 取得できない場合は何もしない（クリック時にフォールバックURLを使う） */ },
+    { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 }
+  );
+}
+
 document.addEventListener('click', (e) => {
   const link = e.target.closest('.popup-maps-link');
-  if(!link) return;
-  e.preventDefault();
+  if(!link || !cachedPosition) return; // 現在地が未取得なら、href の初期値（目的地のみ）でそのまま遷移させる
   const destLat = link.dataset.lat;
   const destLng = link.dataset.lng;
-
-  // クリックした瞬間（ユーザー操作の文脈内）にタブを先に開いておく
-  const newTab = window.open('', '_blank');
-
-  let redirected = false;
-  const goTo = (originStr) => {
-    if(redirected) return; // 二重リダイレクト防止
-    redirected = true;
-    const url = `https://www.google.com/maps/dir/?api=1${originStr}&destination=${destLat},${destLng}&travelmode=driving`;
-    if(newTab && !newTab.closed){
-      try{ newTab.opener = null; }catch(err){ /* 設定できない環境は無視 */ }
-      newTab.location.href = url;
-    } else {
-      // ポップアップがブロックされていた場合の保険（同じタブで開く）
-      window.location.href = url;
-    }
-  };
-
-  // 位置情報の取得が固まって応答が返らない環境向けの安全装置。
-  // 一定時間で応答がなければ、目的地のみ指定して強制的に転送する。
-  const timeoutId = setTimeout(() => goTo(''), 4000);
-
-  if(navigator.geolocation){
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        clearTimeout(timeoutId);
-        goTo(`&origin=${pos.coords.latitude},${pos.coords.longitude}`);
-      },
-      () => {
-        // 位置情報が取得できない場合は、目的地のみ指定してGoogle側の現在地判定に任せる
-        clearTimeout(timeoutId);
-        goTo('');
-      },
-      { enableHighAccuracy: false, timeout: 3000, maximumAge: 300000 }
-    );
-  } else {
-    clearTimeout(timeoutId);
-    goTo('');
-  }
+  // 通常のリンク遷移はそのまま活かし、飛び先のURLだけを直前で書き換える
+  link.href = `https://www.google.com/maps/dir/?api=1&origin=${cachedPosition.latitude},${cachedPosition.longitude}&destination=${destLat},${destLng}&travelmode=driving`;
 });
 
 /* ===================== 右パネルのリスト生成 ===================== */
@@ -564,6 +537,7 @@ function selectSpot(id, flyToIt){
     map.flyTo([spot.lat, spot.lng], 15, { duration: 0.8 });
   }
   markers[id].openPopup();
+  prefetchLocation();
 
   // ポイントを選んだら、地図とピンが見えるようボトムシートを閉じる（スマホ表示）
   panelEl.classList.remove('sheet-open');
