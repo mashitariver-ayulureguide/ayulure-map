@@ -485,10 +485,13 @@ document.addEventListener('click', (e) => {
   // クリックした瞬間（ユーザー操作の文脈内）にタブを先に開いておく
   const newTab = window.open('', '_blank');
 
+  let redirected = false;
   const goTo = (originStr) => {
+    if(redirected) return; // 二重リダイレクト防止
+    redirected = true;
     const url = `https://www.google.com/maps/dir/?api=1${originStr}&destination=${destLat},${destLng}&travelmode=driving`;
-    if(newTab){
-      newTab.opener = null;
+    if(newTab && !newTab.closed){
+      try{ newTab.opener = null; }catch(err){ /* 設定できない環境は無視 */ }
       newTab.location.href = url;
     } else {
       // ポップアップがブロックされていた場合の保険（同じタブで開く）
@@ -496,18 +499,25 @@ document.addEventListener('click', (e) => {
     }
   };
 
+  // 位置情報の取得が固まって応答が返らない環境向けの安全装置。
+  // 一定時間で応答がなければ、目的地のみ指定して強制的に転送する。
+  const timeoutId = setTimeout(() => goTo(''), 6000);
+
   if(navigator.geolocation){
     navigator.geolocation.getCurrentPosition(
       (pos) => {
+        clearTimeout(timeoutId);
         goTo(`&origin=${pos.coords.latitude},${pos.coords.longitude}`);
       },
       () => {
         // 位置情報が取得できない場合は、目的地のみ指定してGoogle側の現在地判定に任せる
+        clearTimeout(timeoutId);
         goTo('');
       },
-      { enableHighAccuracy: true, timeout: 8000 }
+      { enableHighAccuracy: true, timeout: 5000 }
     );
   } else {
+    clearTimeout(timeoutId);
     goTo('');
   }
 });
