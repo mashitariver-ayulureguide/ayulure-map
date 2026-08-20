@@ -169,6 +169,32 @@
   .popup-pdf-link:hover,
   .popup-maps-link:hover,
   .popup-home-link:hover{ opacity:.8; }
+  .popup-nav{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    margin-top:10px;
+    padding-top:9px;
+    border-top:1px solid var(--stone-dark);
+  }
+  .popup-nav-btn{
+    font-family:'Noto Sans JP',sans-serif;
+    font-size:12px;
+    font-weight:700;
+    color:var(--river-deep);
+    background:var(--stone);
+    border:none;
+    border-radius:5px;
+    padding:6px 12px;
+    cursor:pointer;
+  }
+  .popup-nav-btn:active{ background:var(--stone-dark); }
+  .popup-nav-count{
+    font-size:11px;
+    color:var(--river-deep);
+    font-weight:700;
+  }
   .popup-image{
     display:block;
     width:100%;
@@ -234,6 +260,9 @@
     .popup-body{font-size:12px;line-height:1.6;}
     .popup-tags{font-size:11px;margin-top:5px;}
     .popup-links{gap:5px;margin-top:6px;}
+    .popup-nav{margin-top:7px;padding-top:7px;}
+    .popup-nav-btn{font-size:11px;padding:5px 10px;}
+    .popup-nav-count{font-size:10px;}
     .popup-pdf-link,
     .popup-maps-link,
     .popup-home-link{padding:5px 8px;font-size:10px;}
@@ -475,17 +504,37 @@ SPOTS.forEach((spot, i) => {
   const mapsFallbackUrl = `https://www.google.com/maps/dir/?api=1&destination=${spot.lat},${spot.lng}&travelmode=driving`;
   const mapsHtml = `<a href="${mapsFallbackUrl}" target="_blank" rel="noopener noreferrer" class="popup-maps-link" data-lat="${spot.lat}" data-lng="${spot.lng}">現在地からのルート（Google）</a>`;
   const homeHtml = `<a href="${BASE_URL}" class="popup-home-link">全体図を見る</a>`;
+
+  // 前後のポイントへ1タップで移動できるナビゲーション（末尾/先頭でループ）
+  const prevSpot = SPOTS[(i - 1 + SPOTS.length) % SPOTS.length];
+  const nextSpot = SPOTS[(i + 1) % SPOTS.length];
+  const navHtml = SPOTS.length > 1
+    ? `<div class="popup-nav">
+         <button type="button" class="popup-nav-btn" data-goto="${prevSpot.id}">‹ 前</button>
+         <span class="popup-nav-count">${i + 1} / ${SPOTS.length}</span>
+         <button type="button" class="popup-nav-btn" data-goto="${nextSpot.id}">次 ›</button>
+       </div>`
+    : '';
+
   marker.bindPopup(
     `${imageHtml}
      <p class="popup-title">${spot.name}</p>
      <p class="popup-body">${spot.desc}</p>
      <p class="popup-tags">${spot.tags}</p>
-     <div class="popup-links">${mapsHtml}${pdfHtml}${homeHtml}</div>`,
-    { maxWidth: 240, maxHeight: 300, autoPanPadding: [16, 16] }
+     <div class="popup-links">${mapsHtml}${pdfHtml}${homeHtml}</div>
+     ${navHtml}`,
+    { maxWidth: 240, maxHeight: 340, autoPanPadding: [16, 16] }
 
   );
   marker.on('click', () => selectSpot(spot.id, false));
   markers[spot.id] = marker;
+});
+
+/* 吹き出し内「前 / 次」ボタン：隣のポイントへ移動する */
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.popup-nav-btn');
+  if(!btn) return;
+  selectSpot(btn.dataset.goto, true);
 });
 
 /* 「現在地からのルート」ボタン：
@@ -502,14 +551,57 @@ SPOTS.forEach((spot, i) => {
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
 let cachedPosition = null;
+let userMarker = null;
+let userAccuracyCircle = null;
+
+/* 取得した現在地を地図上に青い点として表示する。
+   「今どこにいて、どのポイントが近いか」が一目で分かるようにする。 */
+function showUserLocation(coords){
+  const latlng = [coords.latitude, coords.longitude];
+  if(userMarker){
+    userMarker.setLatLng(latlng);
+    userAccuracyCircle.setLatLng(latlng).setRadius(coords.accuracy || 0);
+    return;
+  }
+  userAccuracyCircle = L.circle(latlng, {
+    radius: coords.accuracy || 0,
+    color: '#1a73e8',
+    weight: 1,
+    fillColor: '#1a73e8',
+    fillOpacity: .12,
+    interactive: false
+  }).addTo(map);
+  userMarker = L.marker(latlng, {
+    icon: L.divIcon({
+      className: '',
+      html: `<div style="
+        width:16px;height:16px;border-radius:50%;
+        background:#1a73e8;border:3px solid #fff;
+        box-shadow:0 0 0 1px rgba(0,0,0,.2), 0 1px 4px rgba(0,0,0,.35);
+      "></div>`,
+      iconSize: [16,16],
+      iconAnchor: [8,8]
+    }),
+    interactive: false,
+    keyboard: false
+  }).addTo(map);
+}
+
 function prefetchLocation(){
-  if(cachedPosition || !navigator.geolocation) return;
+  if(!navigator.geolocation) return;
+  if(cachedPosition && userMarker) return;
   navigator.geolocation.getCurrentPosition(
-    (pos) => { cachedPosition = pos.coords; },
+    (pos) => {
+      cachedPosition = pos.coords;
+      showUserLocation(pos.coords);
+    },
     () => { /* 取得できない場合は何もしない（クリック時にフォールバックURLを使う） */ },
     { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 }
   );
 }
+
+// ページを開いた時点で現在地の取得を試み、地図上に表示する
+prefetchLocation();
 
 document.addEventListener('click', (e) => {
   const link = e.target.closest('.popup-maps-link');
@@ -580,6 +672,13 @@ SPOTS.forEach((spot, i) => {
 const panelEl = document.getElementById('panel');
 document.getElementById('panelHead').addEventListener('click', () => {
   panelEl.classList.toggle('sheet-open');
+  // 開いたときは、選択中のポイントが画面内に見えるよう自動でスクロールする
+  if(panelEl.classList.contains('sheet-open')){
+    const activeItem = listEl.querySelector('.spot-item.active');
+    if(activeItem){
+      activeItem.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  }
 });
 
 /* ===================== 選択状態の反映 ===================== */
