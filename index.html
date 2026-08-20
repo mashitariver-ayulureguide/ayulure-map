@@ -146,6 +146,7 @@
   }
   .popup-pdf-link,
   .popup-maps-link,
+  .popup-mapsweb-link,
   .popup-home-link{
     display:inline-block;
     padding:7px 11px;
@@ -163,6 +164,11 @@
     background:var(--river-mid);
     color:#fff !important;
   }
+  .popup-mapsweb-link{
+    background:transparent;
+    color:var(--river-mid) !important;
+    border:1px solid var(--river-mid);
+  }
   .popup-home-link{
     background:transparent;
     color:var(--river-deep) !important;
@@ -170,7 +176,32 @@
   }
   .popup-pdf-link:hover,
   .popup-maps-link:hover,
+  .popup-mapsweb-link:hover,
   .popup-home-link:hover{ opacity:.8; }
+
+  /* 周辺施設（補助表示）— 釣りポイントより控えめに見せる */
+  .facility-pin{
+    display:flex;
+    align-items:center;
+    gap:4px;
+    white-space:nowrap;
+    pointer-events:none;
+  }
+  .facility-dot{
+    width:8px; height:8px;
+    border-radius:50%;
+    background:#8a8f85;
+    border:2px solid #fff;
+    box-shadow:0 1px 2px rgba(0,0,0,.3);
+    flex-shrink:0;
+  }
+  .facility-label{
+    font-size:10px;
+    font-weight:700;
+    color:#5c6157;
+    text-shadow:0 0 3px #fff, 0 0 3px #fff, 0 0 3px #fff;
+  }
+
   .popup-nav{
     display:flex;
     align-items:center;
@@ -267,6 +298,7 @@
     .popup-nav-count{font-size:10px;}
     .popup-pdf-link,
     .popup-maps-link,
+    .popup-mapsweb-link,
     .popup-home-link{padding:5px 8px;font-size:10px;}
   }
 </style>
@@ -421,6 +453,16 @@ const SPOTS = [
   }
 ];
 
+/* ===================== 周辺施設（補助情報） =====================
+   釣りポイントの目印になる主要施設。地図が寂しくならないよう補うもので、
+   主役は SPOTS のため、小さく控えめなアイコンで表示する。 */
+const FACILITIES = [
+  { name: "下呂駅（下呂温泉街）", lat: 35.80512523237797, lng: 137.23968692683704 },
+  { name: "JR焼石駅",           lat: 35.72562702589694, lng: 137.2004024913686  },
+  { name: "漁協事務所",          lat: 35.88095421198268, lng: 137.2061788563042  },
+  { name: "JR小坂駅",           lat: 35.95062342467794, lng: 137.25724719872903 }
+];
+
 /* ===================== 地図初期化 ===================== */
 const map = L.map('map', { scrollWheelZoom: true }).setView([35.83, 137.22], 11);
 
@@ -492,6 +534,25 @@ function makeIcon(active, number){
 
 const BASE_URL = "https://mashitariver-ayulureguide.github.io/ayulure-map/";
 
+// iOS判定（GoogleマップアプリへのURLスキームはiOSでのみ使用する）
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+/* ===================== 周辺施設のマーカー表示 =====================
+   釣りポイントより先に描画することで、重なった際は
+   ポイントのピンが常に手前に来るようにする。 */
+FACILITIES.forEach(f => {
+  L.marker([f.lat, f.lng], {
+    icon: L.divIcon({
+      className: '',
+      html: `<div class="facility-pin"><span class="facility-dot"></span><span class="facility-label">${f.name}</span></div>`,
+      iconSize: [10, 10],
+      iconAnchor: [5, 5]
+    }),
+    interactive: false,
+    keyboard: false
+  }).addTo(map);
+});
+
 const markers = {};
 const spotNumberById = {};
 SPOTS.forEach((spot, i) => {
@@ -503,8 +564,10 @@ SPOTS.forEach((spot, i) => {
   const pdfHtml = spot.pdf
     ? `<a href="${spot.pdf}" target="_blank" rel="noopener noreferrer" class="popup-pdf-link">詳しく見る（PDF）</a>`
     : '';
-  const mapsFallbackUrl = `https://www.google.com/maps/dir/?api=1&destination=${spot.lat},${spot.lng}&travelmode=driving`;
-  const mapsHtml = `<a href="${mapsFallbackUrl}" target="_blank" rel="noopener noreferrer" class="popup-maps-link" data-lat="${spot.lat}" data-lng="${spot.lng}">現在地からのルート（Google）</a>`;
+  const mapsWebUrl = `https://www.google.com/maps/dir/?api=1&destination=${spot.lat},${spot.lng}&travelmode=driving`;
+  // iOSではGoogleマップアプリへ直接切り替えるボタンを出す（Web版への自動転送は行わない）
+  const mapsAppHtml = `<a href="#" class="popup-maps-link" data-lat="${spot.lat}" data-lng="${spot.lng}">アプリでルート（Google）</a>`;
+  const mapsWebHtml = `<a href="${mapsWebUrl}" target="_blank" rel="noopener noreferrer" class="popup-mapsweb-link">Webでルート</a>`;
   const homeHtml = `<a href="${BASE_URL}" class="popup-home-link">全体図を見る</a>`;
 
   // 前後のポイントへ1タップで移動できるナビゲーション（末尾/先頭でループ）
@@ -523,11 +586,11 @@ SPOTS.forEach((spot, i) => {
      <p class="popup-title">${spot.name}</p>
      <p class="popup-body">${spot.desc}</p>
      <p class="popup-tags">${spot.tags}</p>
-     <div class="popup-links">${mapsHtml}${pdfHtml}${homeHtml}</div>
+     <div class="popup-links">${isIOS ? mapsAppHtml : ''}${mapsWebHtml}${pdfHtml}${homeHtml}</div>
      ${navHtml}`,
     {
       maxWidth: 240,
-      maxHeight: 340,
+      maxHeight: 380,
       autoPan: true,
       // 吹き出しが画面内に収まるよう地図を自動でずらす際の余白。
       // 上側を大きめに取ることで、ヘッダーの裏に写真部分が隠れるのを防ぐ。
@@ -548,18 +611,15 @@ document.addEventListener('click', (e) => {
   selectSpot(btn.dataset.goto, true);
 });
 
-/* 「現在地からのルート」ボタン：
+/* 「アプリでルート」ボタン（iOSのみ表示）：
    吹き出しを開いた時点で裏側で現在地を取得しておき（prefetchLocation）、
-   ボタンをクリックした瞬間には既に分かっている現在地を使ってGoogleマップへ
-   遷移する。
+   ボタンをタップした瞬間に、その現在地を使ってGoogleマップアプリへ直接切り替える。
 
-   iOSのSafari/Chromeでは、通常のGoogleマップWebリンク(https://www.google.com/maps/...)
-   を新しいタブで開こうとすると、ブラウザによって挙動が割れてしまう
-   （Safari:アプリを開く確認ダイアログ／Chrome:Google独自の「アプリで開く」宣伝ページ）。
-   これを避けるため、iOSでは Google マップアプリの専用URL形式(comgooglemaps://)を
-   直接呼び出す。アプリが入っていればブラウザの種類を問わず直接アプリへ切り替わり、
-   入っていなければ一定時間後に通常のWeb版へフォールバックする。 */
-const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+   Web版への自動フォールバックは行わない。以前は「アプリが開かなかった場合の保険」として
+   自動でWeb版へ転送していたが、アプリ切り替えの検知がSafariで安定せず、
+   アプリから戻ってきた際にブラウザ側のページが勝手にGoogleマップへ
+   変わってしまう不具合があったため。
+   アプリを使わない人向けには、別途「Webでルート」ボタンを併設している。 */
 
 let cachedPosition = null;
 let userMarker = null;
@@ -615,51 +675,28 @@ function prefetchLocation(){
 prefetchLocation();
 
 document.addEventListener('click', (e) => {
-  const link = e.target.closest('.popup-maps-link');
-  if(!link) return;
-
-  const destLat = link.dataset.lat;
-  const destLng = link.dataset.lng;
   const originParam = cachedPosition ? `${cachedPosition.latitude},${cachedPosition.longitude}` : '';
-  const webUrl = `https://www.google.com/maps/dir/?api=1${originParam ? '&origin=' + originParam : ''}&destination=${destLat},${destLng}&travelmode=driving`;
 
-  if(!isIOS){
-    // iOS以外（PC・Androidなど）は、これまで通り通常のWebリンクとして遷移
-    link.href = webUrl;
+  // 「Webでルート」ボタン：現在地が取得できていれば出発地として差し込む
+  const webLink = e.target.closest('.popup-mapsweb-link');
+  if(webLink && originParam){
+    const url = new URL(webLink.href);
+    url.searchParams.set('origin', originParam);
+    webLink.href = url.toString();
     return;
   }
 
-  // iOS：アプリへの直接切り替えを試み、切り替わらなければWeb版へフォールバック
+  // 「アプリでルート」ボタン（iOSのみ）：Googleマップアプリへ直接切り替える。
+  // Web版への自動転送は一切行わないため、アプリから戻ってきても
+  // ブラウザ側のページはこのマップのまま保たれる。
+  const appLink = e.target.closest('.popup-maps-link');
+  if(!appLink) return;
   e.preventDefault();
-  const appUrl = `comgooglemaps://?daddr=${destLat},${destLng}&directionsmode=driving`
+
+  const destLat = appLink.dataset.lat;
+  const destLng = appLink.dataset.lng;
+  window.location.href = `comgooglemaps://?daddr=${destLat},${destLng}&directionsmode=driving`
     + (originParam ? `&saddr=${originParam}` : '');
-
-  /* バックグラウンド中はタイマーの実行が一時停止されるため、
-     「時間で判定する」方式だと、アプリから戻ってきた瞬間にタイマーが
-     まとめて実行され、正常に切り替わっていたのに誤って
-     フォールバックしてしまう不具合があった。
-     そのため「画面が非表示になったイベント」が実際に発生したかどうかで
-     判定し、発生していればフォールバック自体を取り消す方式に変更。 */
-  let switchedAway = false;
-  const onHide = () => {
-    switchedAway = true;
-    clearTimeout(fallbackTimer);
-    document.removeEventListener('visibilitychange', onHide);
-  };
-  document.addEventListener('visibilitychange', onHide);
-
-  // ページ本体から直接呼び出す。アプリへの切り替えに成功した場合、
-  // ブラウザの表示内容は変わらないまま保たれる（iframe経由だと
-  // Safariではセキュリティ上の理由でブロックされてしまうため、直接呼び出す）。
-  window.location.href = appUrl;
-
-  const fallbackTimer = setTimeout(() => {
-    document.removeEventListener('visibilitychange', onHide);
-    if(!switchedAway){
-      // 切り替わっていない＝アプリ未インストールとみなし、Web版へ遷移
-      window.location.href = webUrl;
-    }
-  }, 1200);
 });
 
 /* ===================== 右パネルのリスト生成 ===================== */
