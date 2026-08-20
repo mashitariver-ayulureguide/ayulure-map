@@ -531,16 +531,29 @@ document.addEventListener('click', (e) => {
   const appUrl = `comgooglemaps://?daddr=${destLat},${destLng}&directionsmode=driving`
     + (originParam ? `&saddr=${originParam}` : '');
 
+  /* バックグラウンド中はタイマーの実行が一時停止されるため、
+     「時間で判定する」方式だと、アプリから戻ってきた瞬間にタイマーが
+     まとめて実行され、正常に切り替わっていたのに誤って
+     フォールバックしてしまう不具合があった。
+     そのため「画面が非表示になったイベント」が実際に発生したかどうかで
+     判定し、発生していればフォールバック自体を取り消す方式に変更。 */
+  let switchedAway = false;
+  const onHide = () => {
+    switchedAway = true;
+    clearTimeout(fallbackTimer);
+    document.removeEventListener('visibilitychange', onHide);
+  };
+  document.addEventListener('visibilitychange', onHide);
+
   // ページ本体から直接呼び出す。アプリへの切り替えに成功した場合、
   // ブラウザの表示内容は変わらないまま保たれる（iframe経由だと
   // Safariではセキュリティ上の理由でブロックされてしまうため、直接呼び出す）。
   window.location.href = appUrl;
 
-  // 少し待ってから、実際に別アプリへ切り替わったか（＝このページが
-  // バックグラウンドになっているか）を判定し、切り替わっていなければ
-  // アプリ未インストールとみなしてWeb版へフォールバックする。
-  setTimeout(() => {
-    if(!document.hidden){
+  const fallbackTimer = setTimeout(() => {
+    document.removeEventListener('visibilitychange', onHide);
+    if(!switchedAway){
+      // 切り替わっていない＝アプリ未インストールとみなし、Web版へ遷移
       window.location.href = webUrl;
     }
   }, 1200);
