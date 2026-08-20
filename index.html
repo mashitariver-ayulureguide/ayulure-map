@@ -4,6 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>益田川 鮎ルアーガイド</title>
+<meta name="description" content="益田川流域の鮎ルアーポイントを地図で紹介。ポイントごとの写真・アクセス方法・駐車場やトイレの情報も掲載しています。">
+
+<!-- SNS・LINEなどでシェアされた際の表示（OGP） -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="益田川 鮎ルアーガイド">
+<meta property="og:description" content="益田川流域の鮎ルアーポイントを地図で紹介。ポイントごとの写真・アクセス方法・駐車場やトイレの情報も掲載しています。">
+<meta property="og:url" content="https://mashitariver-ayulureguide.github.io/ayulure-map/">
+<meta property="og:image" content="https://mashitariver-ayulureguide.github.io/ayulure-map/kyowabashi.jpg">
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary_large_image">
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
@@ -122,9 +133,9 @@
     border-radius:10px;
     font-family:'Noto Sans JP',sans-serif;
   }
-  .popup-title{font-weight:700;font-size:13px;margin:0 0 4px;}
-  .popup-body{font-size:12px;line-height:1.6;margin:0;}
-  .popup-tags{margin-top:6px;font-size:11px;color:var(--river-mid);}
+  .popup-title{font-weight:700;font-size:14px;margin:0 0 5px;}
+  .popup-body{font-size:13px;line-height:1.7;margin:0;color:var(--ink);}
+  .popup-tags{margin-top:7px;font-size:12px;font-weight:700;color:var(--river-deep);}
   .popup-links{
     display:flex;
     flex-wrap:wrap;
@@ -135,8 +146,8 @@
   .popup-maps-link,
   .popup-home-link{
     display:inline-block;
-    padding:6px 10px;
-    font-size:11px;
+    padding:7px 11px;
+    font-size:12px;
     font-weight:700;
     text-decoration:none;
     border-radius:5px;
@@ -219,9 +230,9 @@
     .panel.sheet-open .sheet-chevron{ transform:rotate(180deg); }
 
     .popup-image{height:70px;}
-    .popup-title{font-size:12px;}
-    .popup-body{font-size:11px;line-height:1.5;}
-    .popup-tags{font-size:10px;margin-top:4px;}
+    .popup-title{font-size:13px;}
+    .popup-body{font-size:12px;line-height:1.6;}
+    .popup-tags{font-size:11px;margin-top:5px;}
     .popup-links{gap:5px;margin-top:6px;}
     .popup-pdf-link,
     .popup-maps-link,
@@ -390,6 +401,13 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r
 /* 地図クレジット表示が、スマホのボトムシート（画面下の一覧バー）と
    重なってしまうため、常に重ならない位置（右上）に移動する */
 map.attributionControl.setPosition('topright');
+
+/* 地図（背景部分）をタップしたら、スマホのボトムシートを閉じる。
+   ユーザーが一覧を開いたまま「地図の方を見たい」と思った時の
+   分かりやすい閉じ方として機能する。 */
+map.on('click', () => {
+  panelEl.classList.remove('sheet-open');
+});
 
 /* コンテナのサイズ確定タイミングによって地図が「世界表示」になってしまう
    Leafletの既知の挙動を防ぐため、読み込み完了後とリサイズ時にサイズを再計算する */
