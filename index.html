@@ -180,10 +180,15 @@
   .popup-home-link:hover{ opacity:.8; }
 
   /* 周辺施設（補助表示）— 釣りポイントより控えめに見せる */
+  .facility-marker{ overflow:visible; }
   .facility-pin{
+    position:absolute;
+    top:0; left:50%;
+    transform:translateX(-50%);
     display:flex;
+    flex-direction:column;
     align-items:center;
-    gap:4px;
+    gap:2px;
     white-space:nowrap;
     pointer-events:none;
   }
@@ -198,8 +203,11 @@
   .facility-label{
     font-size:10px;
     font-weight:700;
-    color:#5c6157;
-    text-shadow:0 0 3px #fff, 0 0 3px #fff, 0 0 3px #fff;
+    color:#4a4f46;
+    background:rgba(255,255,255,.82);
+    padding:1px 5px;
+    border-radius:3px;
+    line-height:1.5;
   }
 
   .popup-nav{
@@ -543,7 +551,7 @@ const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 FACILITIES.forEach(f => {
   L.marker([f.lat, f.lng], {
     icon: L.divIcon({
-      className: '',
+      className: 'facility-marker',
       html: `<div class="facility-pin"><span class="facility-dot"></span><span class="facility-label">${f.name}</span></div>`,
       iconSize: [10, 10],
       iconAnchor: [5, 5]
