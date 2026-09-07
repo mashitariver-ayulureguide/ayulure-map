@@ -203,11 +203,12 @@
   .facility-label{
     font-size:10px;
     font-weight:700;
-    color:#4a4f46;
-    background:rgba(255,255,255,.82);
+    color:#3a3f36;
+    background:rgba(255,255,255,.92);
     padding:1px 5px;
     border-radius:3px;
     line-height:1.5;
+    box-shadow:0 0 0 1px rgba(0,0,0,.06);
   }
 
   .popup-nav{
@@ -474,8 +475,8 @@ const FACILITIES = [
 /* ===================== 地図初期化 ===================== */
 const map = L.map('map', { scrollWheelZoom: true }).setView([35.83, 137.22], 11);
 
-L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-  attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors',
   maxZoom: 19
 }).addTo(map);
 
