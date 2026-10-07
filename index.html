@@ -136,6 +136,17 @@
     font-family:'Noto Sans JP',sans-serif;
   }
   .popup-title{font-weight:700;font-size:14px;margin:0 0 5px;}
+  .popup-award{
+    display:inline-block;
+    margin:0 0 7px;
+    padding:3px 8px;
+    font-size:11px;
+    font-weight:700;
+    line-height:1.5;
+    color:#fff;
+    background:var(--ayu-orange);
+    border-radius:4px;
+  }
   .popup-body{font-size:13px;line-height:1.7;margin:0;color:var(--ink);}
   .popup-tags{margin-top:7px;font-size:12px;font-weight:700;color:var(--river-deep);}
   .popup-links{
@@ -299,6 +310,7 @@
 
     .popup-image{height:70px;}
     .popup-title{font-size:13px;}
+    .popup-award{font-size:10px;padding:2px 6px;margin-bottom:6px;}
     .popup-body{font-size:12px;line-height:1.6;}
     .popup-tags{font-size:11px;margin-top:5px;}
     .popup-links{gap:5px;margin-top:6px;}
@@ -342,22 +354,23 @@
 const SPOTS = [
   {
     id: "hanamomo",
-    name: "小坂川（支流）道の駅はなもも前",
+    name: "小坂川（支流）　道の駅はなもも裏",
     river: "小坂川",
     lat: 35.9315092, lng: 137.2948095,
     image: "hanamomo.jpg",
     pdf: "hanamomo.pdf",
-    desc: "御嶽の恵みに育まれた鮎を釣りに。道の駅からすぐ、トイレも食事処も近い安心感。",
+    award: "第24回清流めぐり利き鮎会 準グランプリ河川",
+    desc: "御嶽山を水源とする、益田川漁協管内で最長28kmの本格的な渓流相。7月中旬から9月下旬がおすすめ。全域が鮎釣り専用区で網が入るのが通常の場所より遅い。",
     tags: "駐車場有・トイレ有・初心者向き"
   },
   {
     id: "kyowabashi",
-    name: "大洞川（支流）共和橋",
+    name: "大洞川（支流）　共和橋",
     river: "大洞川",
     lat: 35.9215159, lng: 137.3091557,
     image: "kyowabashi.jpg",
     pdf: "kyowabashi.pdf",
-    desc: "釣りも、川遊びも楽しめる。近隣にキャンプ場あり、川遊びできるスポットも点在。",
+    desc: "小坂川の支流で全長3.5kmと短いが、鮎の放流量は多い。入川が容易で小坂川より水温が高く、解禁日から鮎の掛かりが良い。全域が鮎釣り専用区で網が入るのが通常の場所より遅い。",
     tags: "舗装駐車場有・初心者向き"
   },
   {
@@ -367,37 +380,39 @@ const SPOTS = [
     lat: 35.7653959, lng: 137.2870686,
     image: "lawson.jpg",
     pdf: "lawson.pdf",
-    desc: "川で出会える、おいしい鮎。鮎の美味しさ・美しさの品評会「鮎グランプリ」の鮎が釣れる。",
+    award: "第26回清流めぐり利き鮎会 準グランプリ河川",
+    desc: "上流部が里川、下流部が本格的な渓流相の全長12kmの支流。解禁当初から鮎の掛かりが良い。枝分かれする乗政川、輪川にも鮎の放流がある。川沿いにコンビニがある支流はここだけで入川も容易。",
     tags: "舗装駐車場有・コンビニ有・初心者向き"
   },
   {
     id: "yamayuubin",
-    name: "山之口川（支流）郵便局前",
+    name: "山之口川（支流）　郵便局前",
     river: "山之口川",
     lat: 35.9684801, lng: 137.1960171,
     image: "yamayuubin.jpg",
     pdf: "yamayuubin.pdf",
-    desc: "静寂と透明度、山里の清流に浸る。抜群の透明度と豊かな自然、静かに川と向き合いたい人のためのフィールド。",
+    desc: "漁協事務所から一番近い、全長15kmの支流。位山を水源とし、川上岳からの流れも合流する。入川が容易で、比較的浅い瀬が続き釣りやすい。近くの山之口川清流広場では渓流釣りや水遊びも楽しめる。",
     tags: "駐車場有・トイレ有（車で2分）・初心者向き"
   },
   {
     id: "kumiaimae",
-    name: "飛騨川　漁協事務所前",
+    name: "飛騨川（益田川本流）　漁協事務所前",
     river: "飛騨川",
     lat: 35.8807575, lng: 137.2068935,
     image: "kumiaimae.jpg",
     pdf: "kumiaimae.pdf",
-    desc: "本流の開放感、大鮎の舞台。飛騨川本流ならではの開放的な眺望。大型の鮎が期待できる。",
+    award: "第10回・第20回清流めぐり利き鮎会 準グランプリ河川",
+    desc: "飛騨川の中で益田川と呼ばれる60kmの区間。水量豊富で広々とした開放的な河川で釣りが出来る。支流より大型の鮎が掛かり、シーズン後半には尺鮎も狙える。",
     tags: "舗装駐車場有・トイレ有・コンビニ有"
   },
   {
     id: "tanosiri",
-    name: "門和佐川（支流）田之尻橋",
+    name: "門和佐川（支流）　田之尻橋",
     river: "門和佐川",
     lat: 35.7131178, lng: 137.2077537,
     image: "tanosiri.jpg",
     pdf: "tanosiri.pdf",
-    desc: "日本の原風景の中で、鮎を釣る。橋の上から覗くと、鮎が泳ぐ姿がはっきり見える透明度。",
+    desc: "里川と本格的な渓流相が入り混じる17kmの支流。解禁当初から鮎の掛かりが良い。他の河川より水量が少なく雨あがりのタイミングがチャンス。駐車スペースも十分あり、入川が容易で攻めるポイントが分かりやすい。",
     tags: "駐車場有・トイレ有（車で2分）・初心者向き"
   },
   {
@@ -590,16 +605,21 @@ SPOTS.forEach((spot, i) => {
        </div>`
     : '';
 
+  const awardHtml = spot.award
+    ? `<p class="popup-award">${spot.award}</p>`
+    : '';
+
   marker.bindPopup(
     `${imageHtml}
      <p class="popup-title">${spot.name}</p>
+     ${awardHtml}
      <p class="popup-body">${spot.desc}</p>
      <p class="popup-tags">${spot.tags}</p>
      <div class="popup-links">${isIOS ? mapsAppHtml : ''}${mapsWebHtml}${pdfHtml}${homeHtml}</div>
      ${navHtml}`,
     {
       maxWidth: 240,
-      maxHeight: 380,
+      maxHeight: 420,
       autoPan: true,
       // 吹き出しが画面内に収まるよう地図を自動でずらす際の余白。
       // 上側を大きめに取ることで、ヘッダーの裏に写真部分が隠れるのを防ぐ。
