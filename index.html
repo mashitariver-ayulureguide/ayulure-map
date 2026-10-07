@@ -135,20 +135,30 @@
     border-radius:10px;
     font-family:'Noto Sans JP',sans-serif;
   }
-  .popup-title{font-weight:700;font-size:14px;margin:0 0 5px;}
+  /* Leaflet既定の余白・行間を打ち消し、間隔は下の各ルールだけで決める */
+  .leaflet-popup-content{
+    margin:12px 14px;
+    line-height:1.5;
+    overflow-x:hidden;
+  }
+  .popup-title{font-weight:700;font-size:14px;line-height:1.5;margin:0 0 6px;}
+  /* display:inline-block だと行ボックスとして扱われ、帯の上下に
+     余分な行間が生まれてしまうため、block + fit-content で回避する */
   .popup-award{
-    display:inline-block;
-    margin:0 0 7px;
+    display:block;
+    width:fit-content;
+    max-width:100%;
+    margin:0 0 8px;
     padding:3px 8px;
     font-size:11px;
     font-weight:700;
-    line-height:1.5;
+    line-height:1.45;
     color:#fff;
     background:var(--ayu-orange);
     border-radius:4px;
   }
-  .popup-body{font-size:13px;line-height:1.7;margin:0;color:var(--ink);}
-  .popup-tags{margin-top:7px;font-size:12px;font-weight:700;color:var(--river-deep);}
+  .popup-body{font-size:13px;line-height:1.65;margin:0;color:var(--ink);}
+  .popup-tags{margin:8px 0 0;font-size:12px;font-weight:700;color:var(--river-deep);}
   .popup-links{
     display:flex;
     flex-wrap:wrap;
@@ -254,8 +264,7 @@
     height:120px;
     object-fit:cover;
     border-radius:6px;
-    margin:-4px -4px 8px;
-    width:calc(100% + 8px);
+    margin:0 0 10px;
   }
 
   @media (max-width:760px){
@@ -308,11 +317,12 @@
     }
     .panel.sheet-open .sheet-chevron{ transform:rotate(180deg); }
 
-    .popup-image{height:70px;}
-    .popup-title{font-size:13px;}
+    .leaflet-popup-content{margin:10px 12px;}
+    .popup-image{height:70px;margin-bottom:8px;}
+    .popup-title{font-size:13px;margin-bottom:5px;}
     .popup-award{font-size:10px;padding:2px 6px;margin-bottom:6px;}
     .popup-body{font-size:12px;line-height:1.6;}
-    .popup-tags{font-size:11px;margin-top:5px;}
+    .popup-tags{font-size:11px;margin-top:6px;}
     .popup-links{gap:5px;margin-top:6px;}
     .popup-nav{margin-top:7px;padding-top:7px;}
     .popup-nav-btn{font-size:11px;padding:5px 10px;}
