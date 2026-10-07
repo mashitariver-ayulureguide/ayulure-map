@@ -267,6 +267,12 @@
     margin:0 0 10px;
   }
 
+  /* PC表示：受賞履歴は折り返さず1行で見せる */
+  @media (min-width:761px){
+    .popup-award{ white-space:nowrap; }
+    .popup-image{ height:150px; }
+  }
+
   @media (max-width:760px){
     .layout{position:relative;min-height:0;}
     #map{position:absolute;inset:0;height:100%;width:100%;}
@@ -571,6 +577,11 @@ const BASE_URL = "https://mashitariver-ayulureguide.github.io/ayulure-map/";
 // iOS判定（GoogleマップアプリへのURLスキームはiOSでのみ使用する）
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
+/* 吹き出しの最大幅。PCでは受賞履歴（「第10回・第20回清流めぐり利き鮎会 準グランプリ河川」など）が
+   折り返さず1行に収まる幅を確保する。スマホは画面を圧迫しないよう従来どおり狭めにする。 */
+const isNarrowScreen = window.matchMedia('(max-width: 760px)').matches;
+const POPUP_MAX_WIDTH = isNarrowScreen ? 240 : 360;
+
 /* ===================== 周辺施設のマーカー表示 =====================
    釣りポイントより先に描画することで、重なった際は
    ポイントのピンが常に手前に来るようにする。 */
@@ -628,7 +639,8 @@ SPOTS.forEach((spot, i) => {
      <div class="popup-links">${isIOS ? mapsAppHtml : ''}${mapsWebHtml}${pdfHtml}${homeHtml}</div>
      ${navHtml}`,
     {
-      maxWidth: 240,
+      // PCでは受賞履歴が1行で収まる幅を確保し、スマホでは画面を圧迫しない幅にする
+      maxWidth: POPUP_MAX_WIDTH,
       maxHeight: 420,
       autoPan: true,
       // 吹き出しが画面内に収まるよう地図を自動でずらす際の余白。
@@ -641,6 +653,23 @@ SPOTS.forEach((spot, i) => {
   );
   marker.on('click', () => selectSpot(spot.id, false));
   markers[spot.id] = marker;
+});
+
+/* ウィンドウ幅を変えた際（PC⇔スマホ幅をまたいだ時）にも
+   吹き出しの最大幅が追従するよう更新する */
+let lastNarrowState = isNarrowScreen;
+window.addEventListener('resize', () => {
+  const nowNarrow = window.matchMedia('(max-width: 760px)').matches;
+  if(nowNarrow === lastNarrowState) return;
+  lastNarrowState = nowNarrow;
+  const width = nowNarrow ? 240 : 360;
+  Object.values(markers).forEach(m => {
+    const popup = m.getPopup();
+    if(popup){
+      popup.options.maxWidth = width;
+      if(popup.isOpen()) popup.update();
+    }
+  });
 });
 
 /* 吹き出し内「前 / 次」ボタン：隣のポイントへ移動する */
